@@ -4,7 +4,9 @@
 	up = keyboard_check(ord("W"));
 	down = keyboard_check(ord("S"));
 	left = keyboard_check(ord("A"));
+	left_p = keyboard_check_pressed(ord("A"));
 	right = keyboard_check(ord("D"));
+	right_p = keyboard_check_pressed(ord("D"));
 	dash = keyboard_check(vk_shift);
 	m1 = mouse_check_button(1);
 
@@ -13,31 +15,31 @@
 
 	current_move_speed += (right - left) * 2; // add moving left and right influence
 	
-	
+	if left_p {dir = -1;} // decide which direction player is facing based off of left and right input
+	if right_p {dir = 1;}
 	
 	// Dashing
-	if (dash) {
-		if (left and right) {
-			if (move_x < 0) {
+	if (dash and dash_cooldown == 0) { // is dash pressed?
+		if (left and right) or (not left and not right) { // if both left and right are pressed or neither are
+			if (dir == -1) { // go based on direction facing instead
 				current_dash_speed = -20;
-			} else {
+			}
+			if (dir == 1) {
 				current_dash_speed = 20;
 			}
-		} else {
+		} else { // else, go based on current left or right input pressed
 			if (left) {
 				current_dash_speed = -20;
 			} else if (right) {
 				current_dash_speed = 20;
-			} else {
-				if (dir == -1) {
-					current_dash_speed = -20;
-				}
-				if (dir == 1) {
-					current_dash_speed = 20;
-				}	
 			}
 		}
+		dash_cooldown = 20;
 	}
+	
+	if dash_cooldown > 0 {dash_cooldown -= 1;} // tick down dash cooldown
+	if current_dash_speed > 0 {current_dash_speed -= 1;} // tick down dash speed
+	if current_dash_speed < 0 {current_dash_speed += 1;}
 	
 	// Speed caps
 	if current_move_speed > move_speed {

@@ -14,6 +14,7 @@
 	dir = 1; // direction currently facing, -1 or 1
 	
 	current_dash_speed = 0;
+	dash_cooldown = 0;
 	
 	//BOOL
 	touching_ground = false;
