@@ -1,0 +1,1 @@
+hpvisualx = 0;
