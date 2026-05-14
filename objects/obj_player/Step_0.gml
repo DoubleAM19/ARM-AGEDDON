@@ -1,7 +1,7 @@
 /// @description runs every frame
 
 //CONTROLS
-	up = keyboard_check(ord("W"));
+	up = keyboard_check(vk_space);
 	down = keyboard_check(ord("S"));
 	left = keyboard_check(ord("A"));
 	left_p = keyboard_check_pressed(ord("A"));
@@ -91,7 +91,15 @@
 // Jumping
 	// Initial boost
 	if (up/*Jump Input*/) and (touching_ground/*currently touching the floor, or*/ or coyote_time > 0/*coyote time is active(4 frames)*/) {
-		move_y = -jump_power;
+		if (current_dash_speed > 15) {
+			move_y = -jump_power / 2;
+			current_dash_speed += jump_power / 3;
+		} else if (current_dash_speed < -15) {
+			move_y = -jump_power / 2;
+			current_dash_speed += -jump_power / 3;
+		} else {
+			move_y = -jump_power;
+		}
 	}
 	
 	// Ground check
