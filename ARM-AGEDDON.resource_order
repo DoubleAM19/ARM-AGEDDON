@@ -4,13 +4,18 @@
   ],
   "ResourceOrderSettings":[
     {"name":"obj_effect_test","order":1,"path":"objects/obj_effect_test/obj_effect_test.yy",},
+    {"name":"obj_emptyobject","order":3,"path":"objects/obj_emptyobject/obj_emptyobject.yy",},
     {"name":"obj_explosion","order":2,"path":"objects/obj_explosion/obj_explosion.yy",},
+    {"name":"obj_freezeframes","order":5,"path":"objects/obj_freezeframes/obj_freezeframes.yy",},
     {"name":"obj_ground","order":3,"path":"objects/obj_ground/obj_ground.yy",},
+    {"name":"obj_pause","order":4,"path":"objects/obj_pause/obj_pause.yy",},
     {"name":"obj_player_old","order":4,"path":"objects/obj_player_old/obj_player_old.yy",},
     {"name":"obj_player","order":1,"path":"objects/obj_player/obj_player.yy",},
     {"name":"obj_ui","order":5,"path":"objects/obj_ui/obj_ui.yy",},
     {"name":"snd_fastfall","order":3,"path":"sounds/snd_fastfall/snd_fastfall.yy",},
     {"name":"snd_impulse","order":1,"path":"sounds/snd_impulse/snd_impulse.yy",},
+    {"name":"snd_parry_ultrakill","order":4,"path":"sounds/snd_parry_ultrakill/snd_parry_ultrakill.yy",},
     {"name":"snd_playerjump","order":2,"path":"sounds/snd_playerjump/snd_playerjump.yy",},
+    {"name":"spr_emptyobject","order":1,"path":"sprites/spr_emptyobject/spr_emptyobject.yy",},
   ],
 }

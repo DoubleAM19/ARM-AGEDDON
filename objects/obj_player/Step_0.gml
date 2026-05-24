@@ -1,4 +1,4 @@
-/// @description runs every frame
+ /// @description runs every frame
 
 //CONTROLS
 	up = keyboard_check(vk_space);
@@ -83,11 +83,11 @@
 	if (up_p/*Jump Input*/ or jump_input_buffer/*buffered jump input*/) and (touching_ground/*currently touching the floor, or*/ or coyote_time > 0/*coyote time is active(4 frames)*/) {
 		if (armimpulsepower_x > 5) { // if currently dashing
 			current_jump_force = -jump_power * 0.75; // 75% jump power
-			current_dash_speed += jump_power * 0.25; // and add 25% of it to horizontal momentum
+			current_dash_speed += jump_power * 0.5; // and add 50% of it to horizontal momentum
 			audio_play_sound(snd_playerjump, 3, false, 1, 0, random_range(1.4, 1.6)); // sfx
 		} else if (armimpulsepower_x < -5) { // if currently dashing other way
 			current_jump_force = -jump_power * 0.75; // same
-			current_dash_speed += -jump_power * 0.25; // same (other way)
+			current_dash_speed += -jump_power * 0.5; // same (other way)
 			audio_play_sound(snd_playerjump, 3, false, 1, 0, random_range(1.4, 1.6)); // sfx
 		} else {
 			current_jump_force = -jump_power; // else normal jump
@@ -131,11 +131,12 @@
 	if (m2_p and impulses > 1) {
 		armimpulsepower_x = -impulsepower * lengthdir_x(1, point_direction(x, y, mouse_x, mouse_y));
 		armimpulsepower_y = -impulsepower * lengthdir_y(1, point_direction(x, y, mouse_x, mouse_y));
+		if (armimpulsepower_y < 2 and armimpulsepower_y > -2) {armimpulsepower_y = -2;}
 		audio_play_sound(snd_impulse, 3, false, 1, 0, random_range(0.9, 1.1)); // sfx
 		impulses -= 1;
 	}
 	
-	if (impulses < 5) {impulses += 0.01}
+	if (impulses < 5) and (((armimpulsepower_x + armimpulsepower_y) / 2) < 3 and ((armimpulsepower_x + armimpulsepower_y) / 2) > -3) {impulses += 0.02}
 	
 	if armimpulsepower_x > 0 {armimpulsepower_x -= impulse_air_resistance;} // tick down impulse speed (x)
 	if armimpulsepower_x < 0 {armimpulsepower_x += impulse_air_resistance;}
