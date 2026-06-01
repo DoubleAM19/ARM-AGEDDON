@@ -1,21 +1,20 @@
  /// @description runs every frame
 
 //CONTROLS
-	up = keyboard_check(vk_space);
-	up_p = keyboard_check_pressed(vk_space);
-	down = keyboard_check(ord("S"));
-	left = keyboard_check(ord("A"));
-	left_p = keyboard_check_pressed(ord("A"));
-	right = keyboard_check(ord("D"));
-	right_p = keyboard_check_pressed(ord("D"));
+	jump = keyboard_check(vk_space);
+	jump_p = keyboard_check_pressed(vk_space);
+	up = keyboard_check(vk_up);
+	down = keyboard_check(vk_down);
+	left = keyboard_check(vk_left);
+	left_p = keyboard_check_pressed(vk_left);
+	right = keyboard_check(vk_right);
+	right_p = keyboard_check_pressed(vk_right);
 	dash = keyboard_check(vk_shift);
-	m1 = mouse_check_button(1);
-	m1_p = mouse_check_button_pressed(1);
-	m2 = mouse_check_button(2);
-	m2_p = mouse_check_button_pressed(2);
+	pickup = keyboard_check(ord("Z"));
+	pickup_p = keyboard_check_pressed(ord("Z"));
+	pickup_r = keyboard_check_released(ord("Z"));
 
 // Horizontal Movement
-	move_x = current_move_speed + current_dash_speed + armimpulsepower_x; // horizontal movement calculation
 
 	current_move_speed += (right - left); // add moving left and right influence
 	
@@ -43,74 +42,71 @@
 		}
 	}
 	// Right Wall Collision
-	if (collision_rectangle(x+16, y, x+18, y-48, obj_ground, false, true)) {
+	if (collision_rectangle(x+16, y, x+17, y-32, collidable_objs, false, true)) {
 		touching_right_wall = true;
 		if move_x > 0 {
-			move_x = 0;
-			armimpulsepower_x = 0;
+			move_x = 0; // halt momentum when hitting wall
 			touched_right_wall = true;
 		} else {
 			touched_right_wall = false;
 		}
-		if current_move_speed > 0 {
+		if current_move_speed > 0 { // halt player horzontal movement
 			current_move_speed = 0;
 		}
 	} else {
 		touching_right_wall = false;
 	}
 	// Left Wall Collision
-	if (collision_rectangle(x-16, y, x-18, y-48, obj_ground, false, true)) {
+	if (collision_rectangle(x-16, y, x-17, y-32, collidable_objs, false, true)) {
 		touching_left_wall = true;
 		if move_x < 0 {
-			move_x = 0;
-			armimpulsepower_x = 0;
+			move_x = 0; // halt momentum when hitting wall
 			touched_left_wall = true;
 		} else {
 			touched_left_wall = false;
 		}
 		if current_move_speed < 0 {
-			current_move_speed = 0;
+			current_move_speed = 0;  // halt player horzontal movement
 		}
 	} else {
 		touching_left_wall = false;
 	}
 	
+	move_x = current_move_speed; // horizontal movement calculation
+	
 // Jumping
 	// Buffered input
-	if (up_p) {jump_input_buffer = 8;}
+	if (jump_p) {jump_input_buffer = 8;}
 	if (jump_input_buffer > 0) {jump_input_buffer -= 1;}
 	// Initial boost
-	if (up_p/*Jump Input*/ or jump_input_buffer/*buffered jump input*/) and (touching_ground/*currently touching the floor, or*/ or coyote_time > 0/*coyote time is active(4 frames)*/) {
-		if (armimpulsepower_x > 5) { // if currently dashing
-			current_jump_force = -jump_power * 0.75; // 75% jump power
-			current_dash_speed += jump_power * 0.5; // and add 50% of it to horizontal momentum
-			audio_play_sound(snd_playerjump, 3, false, 1, 0, random_range(1.4, 1.6)); // sfx
-		} else if (armimpulsepower_x < -5) { // if currently dashing other way
-			current_jump_force = -jump_power * 0.75; // same
-			current_dash_speed += -jump_power * 0.5; // same (other way)
-			audio_play_sound(snd_playerjump, 3, false, 1, 0, random_range(1.4, 1.6)); // sfx
-		} else {
-			current_jump_force = -jump_power; // else normal jump
-			audio_play_sound(snd_playerjump, 3, false, 1, 0, random_range(0.9, 1.1)); // sfx
-		}
+	if (jump_p/*Jump Input*/ or jump_input_buffer/*buffered jump input*/) and (touching_ground/*currently touching the floor, or*/ or coyote_time > 0/*coyote time is active(4 frames)*/) {
+		current_jump_force = -jump_power; // else normal jump
+		audio_play_sound(snd_playerjump, 3, false, 1, 0, random_range(0.9, 1.1)); // sfx
 		coyote_time = 0; // reset coyote time
+	}
+	// Added height from holding jump
+	if !(touching_ground) and (jump) and (current_jump_force < 0) { // not on ground, jump button held, and currently ascending
+		current_jump_force -= 0.5;
 	}
 	
 	// Ground check
-	if collision_rectangle(x - 16, y, x + 16, y + 4, obj_ground, false, true) {
-		touching_ground = true;
+	if collision_rectangle(x - 16, y, x + 16, y + 4, collidable_objs, false, true) {
+		touching_ground = true; // we are currently on the ground, so set this to true
 		fall_speed_multiplier = 1;
 		coyote_time = 6; // reset coyote time
 		if (current_jump_force > 0) {current_jump_force = 0;}
+		if !collision_rectangle(x - 16, y, x + 16, y + 1, collidable_objs, false, true) { // make the character flush with the ground
+			y += 1; // inch player to be flush with the ground
+		}
 	} else {
-		touching_ground = false;
+		touching_ground = false; // ...else we are not on the ground, so false
 		if coyote_time > 0 {coyote_time -= 1;}  // tick down coyote time frames
 		
 		// calculate fall speeds
 			if (down and fall_speed_multiplier == 1) { // fast fall
-				current_jump_force += 10;
+				current_jump_force += 10; // burst of speed
 				audio_play_sound(snd_fastfall, 3, false, 1, 0, random_range(0.9, 1.1)); // sfx
-				fall_speed_multiplier = 2;
+				fall_speed_multiplier = 2; // .. and falling faster
 			}
 		
 			current_jump_force += player_gravity * fall_speed_multiplier; // apply fast fall multiplier
@@ -121,30 +117,45 @@
 	}
 	
 	//Ceiling Check
-	if collision_rectangle(x - 16, y - 48, x + 16, y - 50, obj_ground, false, true) and (current_jump_force < 0) {
+	if collision_rectangle(x - 16, y - 32, x + 16, y - 34, collidable_objs, false, true) and (current_jump_force < 0) {
 		current_jump_force = 0;
 	}
 	
-	move_y = current_jump_force + armimpulsepower_y;
-	
-// Impulses
-	if (m2_p and impulses > 1) {
-		armimpulsepower_x = -impulsepower * lengthdir_x(1, point_direction(x, y, mouse_x, mouse_y));
-		armimpulsepower_y = -impulsepower * lengthdir_y(1, point_direction(x, y, mouse_x, mouse_y));
-		if (armimpulsepower_y < 2 and armimpulsepower_y > -2) {armimpulsepower_y = -2;}
-		audio_play_sound(snd_impulse, 3, false, 1, 0, random_range(0.9, 1.1)); // sfx
-		impulses -= 1;
-	}
-	
-	if (impulses < 5) and (((armimpulsepower_x + armimpulsepower_y) / 2) < 3 and ((armimpulsepower_x + armimpulsepower_y) / 2) > -3) {impulses += 0.02}
-	
-	if armimpulsepower_x > 0 {armimpulsepower_x -= impulse_air_resistance;} // tick down impulse speed (x)
-	if armimpulsepower_x < 0 {armimpulsepower_x += impulse_air_resistance;}
-	if armimpulsepower_y > 0 {armimpulsepower_y -= impulse_air_resistance;} // tick down impulse speed (y)
-	if armimpulsepower_y < 0 {armimpulsepower_y += impulse_air_resistance;}
-
-	if (-1 < armimpulsepower_x and armimpulsepower_x < 1) {armimpulsepower_x = 0;} // prevent number resting at a decimal less than 1 but bigger than 0
-	if (-1 < armimpulsepower_y and armimpulsepower_y < 1) {armimpulsepower_y = 0;}
+	move_y = current_jump_force; // vertical movement calculation
 	
 // Move and Collide
-	move_and_collide(move_x, move_y, obj_ground);
+	move_and_collide(move_x, move_y, collidable_objs);
+	
+// Pickup Blocks
+	if (pickup_p) {
+		var _list = ds_list_create(); 
+		if collision_rectangle_list(x - 4, y + 12, x + 4, y + 20, obj_grabbableblock, true, true, _list, false) {
+			held_obj = _list[| 0];
+			holding_obj = true;
+			held_obj.placed = false;
+			held_obj_interp = 0.1;
+			audio_play_sound(snd_smb2_pickup, 3, false, 1, 0, 1); // sfx
+		} else if collision_rectangle_list(x - 14, y + 12, x + 14, y + 20, obj_grabbableblock, true, true, _list, false) {
+			held_obj = _list[| 0];
+			holding_obj = true;
+			held_obj.placed = false;
+			held_obj_interp = 0.1;
+			audio_play_sound(snd_smb2_pickup, 3, false, 1, 0, 1); // sfx
+		}
+		ds_list_destroy(_list);
+	}
+	if (holding_obj) and (pickup) {
+		held_obj_x_target = x - 16; // prep objects x
+		held_obj_y_target = y - 48 - 16; // prep objects y
+		held_obj.x = lerp(held_obj.x, held_obj_x_target, held_obj_interp); // lock objects x
+		held_obj.y = lerp(held_obj.y, held_obj_y_target, held_obj_interp); // lock objects y
+		held_obj.dir = dir; // set dir to player dir for throwing
+		held_obj.state = 1; // set obj state to 1(held)
+		if (held_obj_interp < 1) {held_obj_interp += 0.05;}
+	}
+	if (holding_obj) and (pickup_r) {
+		audio_play_sound(snd_smb2_throw, 3, false, 1, 0, 1); // sfx
+		held_obj.state = 2; // set obj state to 2(thrown)
+		held_obj = noone; // reset held object
+		holding_obj = false; // not holding an object anymore
+	}

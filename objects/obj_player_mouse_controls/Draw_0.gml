@@ -17,15 +17,14 @@ draw_text(100, 180, "armimpulsepower_y="+string(armimpulsepower_y));
 draw_text(100, 200, "impulses=="+string(impulses));
 */
 /*
-draw_rectangle(x+16, y, x+17, y-32, false)
-draw_rectangle(x-16, y, x-17, y-32, false)
+draw_rectangle(x+16, y, x+18, y-48, false)
+draw_rectangle(x-16, y, x-18, y-48, false)
 draw_rectangle(x - 16, y, x + 16, y + 4, false)
-draw_rectangle(x - 16, y - 32, x + 16, y - 34, false)
-
-draw_rectangle(x - 4, y + 12, x + 4, y + 20, false)
+draw_rectangle(x - 16, y - 48, x + 16, y - 50, false)
 */
 /*
 draw_circle(x + lengthdir_x(128, point_direction(x, y-32, mouse_x, mouse_y)), y-32 + lengthdir_y(128, point_direction(x, y-32, mouse_x, mouse_y)), 64, false);
 draw_circle(x + lengthdir_x(48, point_direction(x, y-32, mouse_x, mouse_y)), y-32 + lengthdir_y(48, point_direction(x, y-32, mouse_x, mouse_y)), 32, false);
 */
+draw_sprite_ext(spr_test1, 1, x, y-32, 1, 1, point_direction(x, y-32, mouse_x, mouse_y)-90, c_red, 1);
 draw_self();
