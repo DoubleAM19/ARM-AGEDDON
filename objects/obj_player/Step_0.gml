@@ -9,38 +9,24 @@
 	left_p = keyboard_check_pressed(vk_left);
 	right = keyboard_check(vk_right);
 	right_p = keyboard_check_pressed(vk_right);
-	dash = keyboard_check(vk_shift);
+	dashroll = keyboard_check(vk_shift);
+	dashroll_p = keyboard_check_pressed(vk_shift);
 	pickup = keyboard_check(ord("Z"));
 	pickup_p = keyboard_check_pressed(ord("Z"));
 	pickup_r = keyboard_check_released(ord("Z"));
-
+	
 // Horizontal Movement
 
-	current_move_speed += (right - left); // add moving left and right influence
-	
-	if left_p {dir = -1;} // decide which direction player is facing based off of left and right input
-	if right_p {dir = 1;}
-	
-	if current_dash_speed > 0 {current_dash_speed -= 1;} // tick down dash speed
-	if current_dash_speed < 0 {current_dash_speed += 1;}
-	if (-1 < current_dash_speed and current_dash_speed < 1) {current_dash_speed = 0;} // prevent number resting at a decimal less than 1 but bigger than 0
-	
-	// Speed caps
-	if current_move_speed > move_speed {
-		current_move_speed = move_speed;
+	if (dashroll) { // placeholder code
+		horizontal_state = horizstate_dashroll;
+	} else {
+		horizontal_state = horizstate_normal;
 	}
-	if current_move_speed < -move_speed {
-		current_move_speed = -move_speed;
-	}
-	// Slow down
-	if (right - left) == 0 {
-		if (current_move_speed > 0) {
-			current_move_speed -= player_friction;
-		}
-		if (current_move_speed < 0) {
-			current_move_speed += player_friction;
-		}
-	}
+	
+	horizontal_state(); // the chunk of code that runs horizontal movement. see create event for definitions
+	
+	if horizontal_state == horizstate_dashroll {_image_angle = -x*2;} // placeholder code
+	
 	// Right Wall Collision
 	if (collision_rectangle(x+16, y, x+17, y-32, collidable_objs, false, true)) {
 		touching_right_wall = true;
@@ -71,7 +57,7 @@
 	} else {
 		touching_left_wall = false;
 	}
-	
+
 	move_x = current_move_speed; // horizontal movement calculation
 	
 // Jumping
@@ -122,12 +108,12 @@
 	}
 	
 	move_y = current_jump_force; // vertical movement calculation
-	
+
 // Move and Collide
 	move_and_collide(move_x, move_y, collidable_objs);
 	
-// Pickup Blocks
-	if (pickup_p) {
+// Pickup things
+	if (pickup_p) and (throw_cooldown == 0) {
 		var _list = ds_list_create(); 
 		if collision_rectangle_list(x - 4, y + 12, x + 4, y + 20, obj_grabbableblock, true, true, _list, false) {
 			held_obj = _list[| 0];
@@ -135,12 +121,14 @@
 			held_obj.placed = false;
 			held_obj_interp = 0.1;
 			audio_play_sound(snd_smb2_pickup, 3, false, 1, 0, 1); // sfx
+			current_jump_force -= 5;
 		} else if collision_rectangle_list(x - 14, y + 12, x + 14, y + 20, obj_grabbableblock, true, true, _list, false) {
 			held_obj = _list[| 0];
 			holding_obj = true;
 			held_obj.placed = false;
 			held_obj_interp = 0.1;
 			audio_play_sound(snd_smb2_pickup, 3, false, 1, 0, 1); // sfx
+			current_jump_force -= 5;
 		}
 		ds_list_destroy(_list);
 	}
@@ -156,6 +144,10 @@
 	if (holding_obj) and (pickup_r) {
 		audio_play_sound(snd_smb2_throw, 3, false, 1, 0, 1); // sfx
 		held_obj.state = 2; // set obj state to 2(thrown)
+		held_obj.throwspeed += abs(move_x*0.75); // conservation of momentum
 		held_obj = noone; // reset held object
 		holding_obj = false; // not holding an object anymore
+		throw_cooldown = 20;
 	}
+	
+	if (throw_cooldown > 0) {throw_cooldown -= 1;}
