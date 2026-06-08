@@ -1,5 +1,7 @@
 {
-  "FolderOrderSettings":[],
+  "FolderOrderSettings":[
+    {"name":"Test","order":3,"path":"folders/Sprites/Test.yy",},
+  ],
   "ResourceOrderSettings":[
     {"name":"obj_effect_test","order":1,"path":"objects/obj_effect_test/obj_effect_test.yy",},
     {"name":"obj_explosion","order":2,"path":"objects/obj_explosion/obj_explosion.yy",},
@@ -18,7 +20,18 @@
     {"name":"snd_playerjump","order":2,"path":"sounds/snd_playerjump/snd_playerjump.yy",},
     {"name":"snd_smb2_pickup","order":6,"path":"sounds/snd_smb2_pickup/snd_smb2_pickup.yy",},
     {"name":"snd_smb2_throw","order":5,"path":"sounds/snd_smb2_throw/snd_smb2_throw.yy",},
-    {"name":"spr_emptyobject","order":1,"path":"sprites/spr_emptyobject/spr_emptyobject.yy",},
-    {"name":"spr_testplayer_1","order":2,"path":"sprites/spr_testplayer_1/spr_testplayer_1.yy",},
+    {"name":"spr_crosshair","order":1,"path":"sprites/spr_crosshair/spr_crosshair.yy",},
+    {"name":"spr_emptyobject","order":2,"path":"sprites/spr_emptyobject/spr_emptyobject.yy",},
+    {"name":"spr_explosion_deltarune","order":3,"path":"sprites/spr_explosion_deltarune/spr_explosion_deltarune.yy",},
+    {"name":"spr_test_fall","order":8,"path":"sprites/spr_test_fall/spr_test_fall.yy",},
+    {"name":"spr_test_idle","order":10,"path":"sprites/spr_test_idle/spr_test_idle.yy",},
+    {"name":"spr_test_intoroll","order":9,"path":"sprites/spr_test_intoroll/spr_test_intoroll.yy",},
+    {"name":"spr_test_jump","order":12,"path":"sprites/spr_test_jump/spr_test_jump.yy",},
+    {"name":"spr_test_roll","order":13,"path":"sprites/spr_test_roll/spr_test_roll.yy",},
+    {"name":"spr_test_stoproll","order":11,"path":"sprites/spr_test_stoproll/spr_test_stoproll.yy",},
+    {"name":"spr_test1","order":4,"path":"sprites/spr_test1/spr_test1.yy",},
+    {"name":"spr_test2","order":5,"path":"sprites/spr_test2/spr_test2.yy",},
+    {"name":"spr_testplayer_1","order":7,"path":"sprites/spr_testplayer_1/spr_testplayer_1.yy",},
+    {"name":"spr_testplayer","order":6,"path":"sprites/spr_testplayer/spr_testplayer.yy",},
   ],
 }

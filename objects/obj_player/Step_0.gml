@@ -9,30 +9,46 @@
 	left_p = keyboard_check_pressed(vk_left);
 	right = keyboard_check(vk_right);
 	right_p = keyboard_check_pressed(vk_right);
-	dashroll = keyboard_check(vk_shift);
-	dashroll_p = keyboard_check_pressed(vk_shift);
+	dash = keyboard_check(vk_shift);
+	dash_p = keyboard_check_pressed(vk_shift);
+	dash_r = keyboard_check_released(vk_shift);
 	pickup = keyboard_check(ord("Z"));
 	pickup_p = keyboard_check_pressed(ord("Z"));
 	pickup_r = keyboard_check_released(ord("Z"));
 	
 // Horizontal Movement
 
-	if (dashroll) { // placeholder code
+	/* DASHROLLING, might use on a charcater but scrapped for now
+	if (dash_p) and (horizontal_state == horizstate_normal) { 
 		horizontal_state = horizstate_dashroll;
-	} else {
-		horizontal_state = horizstate_normal;
+		current_move_speed += 7*dir;
+		current_jump_force -= 7
 	}
+	if (dash_r) and (horizontal_state == horizstate_dashroll) {
+		horizontal_state = horizstate_noinput;
+		if (touching_ground) {
+			dashroll_endlag = 20;
+		} else {
+			dashroll_endlag = 2;
+		}
+	}
+	if (dashroll_endlag > 0) {
+		dashroll_endlag -= 1;
+		if (dashroll_endlag == 1) {
+			horizontal_state = horizstate_normal;
+		}
+	}
+	*/
 	
 	horizontal_state(); // the chunk of code that runs horizontal movement. see create event for definitions
-	
-	if horizontal_state == horizstate_dashroll {_image_angle = -x*2;} // placeholder code
-	
+
 	// Right Wall Collision
 	if (collision_rectangle(x+16, y, x+17, y-32, collidable_objs, false, true)) {
 		touching_right_wall = true;
 		if move_x > 0 {
 			move_x = 0; // halt momentum when hitting wall
 			touched_right_wall = true;
+			dashroll_endlag = 2; // stop endlag of dashroll
 		} else {
 			touched_right_wall = false;
 		}
@@ -47,7 +63,8 @@
 		touching_left_wall = true;
 		if move_x < 0 {
 			move_x = 0; // halt momentum when hitting wall
-			touched_left_wall = true;
+			touched_left_wall = true; 
+			dashroll_endlag = 2; // stop endlag of dashroll
 		} else {
 			touched_left_wall = false;
 		}
@@ -58,7 +75,7 @@
 		touching_left_wall = false;
 	}
 
-	move_x = current_move_speed; // horizontal movement calculation
+	move_x = current_move_speed + current_dash_speed_x; // horizontal movement calculation
 	
 // Jumping
 	// Buffered input
@@ -90,9 +107,7 @@
 		
 		// calculate fall speeds
 			if (down and fall_speed_multiplier == 1) { // fast fall
-				current_jump_force += 10; // burst of speed
-				audio_play_sound(snd_fastfall, 3, false, 1, 0, random_range(0.9, 1.1)); // sfx
-				fall_speed_multiplier = 2; // .. and falling faster
+				fall_speed_multiplier = 1.2; // .. and falling faster
 			}
 		
 			current_jump_force += player_gravity * fall_speed_multiplier; // apply fast fall multiplier
@@ -107,7 +122,7 @@
 		current_jump_force = 0;
 	}
 	
-	move_y = current_jump_force; // vertical movement calculation
+	move_y = current_jump_force + current_dash_speed_y; // vertical movement calculation
 
 // Move and Collide
 	move_and_collide(move_x, move_y, collidable_objs);
@@ -132,7 +147,7 @@
 		}
 		ds_list_destroy(_list);
 	}
-	if (holding_obj) and (pickup) {
+	if (holding_obj) {
 		held_obj_x_target = x - 16; // prep objects x
 		held_obj_y_target = y - 48 - 16; // prep objects y
 		held_obj.x = lerp(held_obj.x, held_obj_x_target, held_obj_interp); // lock objects x
@@ -141,7 +156,7 @@
 		held_obj.state = 1; // set obj state to 1(held)
 		if (held_obj_interp < 1) {held_obj_interp += 0.05;}
 	}
-	if (holding_obj) and (pickup_r) {
+	if (holding_obj) and !(pickup) and (held_obj_interp == 1) {
 		audio_play_sound(snd_smb2_throw, 3, false, 1, 0, 1); // sfx
 		held_obj.state = 2; // set obj state to 2(thrown)
 		held_obj.throwspeed += abs(move_x*0.75); // conservation of momentum
@@ -151,3 +166,26 @@
 	}
 	
 	if (throw_cooldown > 0) {throw_cooldown -= 1;}
+	
+// State Machine
+	main_index += 0.5;
+	if (horizontal_state == horizstate_dashroll) {
+		animation_state = "dashroll";
+		main_sprite = spr_test_roll;
+	} else if !(touching_ground) {
+		if (move_y < 0) {
+			animation_state = "ascending";
+			main_sprite = spr_test_jump;
+		} else {
+			animation_state = "decending";
+			main_sprite = spr_test_fall;
+		}
+	} else {
+		if (right - left) == 0 {
+			animation_state = "idle";
+			main_sprite = spr_test_idle;
+		} else {
+			animation_state = "walking";
+			main_sprite = spr_test_idle;
+		}
+	}
