@@ -48,7 +48,7 @@
 		if move_x > 0 {
 			move_x = 0; // halt momentum when hitting wall
 			touched_right_wall = true;
-			dashroll_endlag = 2; // stop endlag of dashroll
+			current_dash_speed_x = 0; // halt momentum of dash
 		} else {
 			touched_right_wall = false;
 		}
@@ -64,7 +64,7 @@
 		if move_x < 0 {
 			move_x = 0; // halt momentum when hitting wall
 			touched_left_wall = true; 
-			dashroll_endlag = 2; // stop endlag of dashroll
+			current_dash_speed_x = 0; // halt momentum of dash
 		} else {
 			touched_left_wall = false;
 		}
@@ -95,7 +95,8 @@
 	// Ground check
 	if collision_rectangle(x - 16, y, x + 16, y + 4, collidable_objs, false, true) {
 		touching_ground = true; // we are currently on the ground, so set this to true
-		fall_speed_multiplier = 1;
+		dash_ready = true; // refresh dash
+		current_fall_speed_multiplier = 1;
 		coyote_time = 6; // reset coyote time
 		if (current_jump_force > 0) {current_jump_force = 0;}
 		if !collision_rectangle(x - 16, y, x + 16, y + 1, collidable_objs, false, true) { // make the character flush with the ground
@@ -106,11 +107,11 @@
 		if coyote_time > 0 {coyote_time -= 1;}  // tick down coyote time frames
 		
 		// calculate fall speeds
-			if (down and fall_speed_multiplier == 1) { // fast fall
-				fall_speed_multiplier = 1.2; // .. and falling faster
+			if (down and current_fall_speed_multiplier == 1) { // fast fall
+				current_fall_speed_multiplier = fall_speed_multiplier; // .. and falling faster
 			}
 		
-			current_jump_force += player_gravity * fall_speed_multiplier; // apply fast fall multiplier
+			current_jump_force += player_gravity * current_fall_speed_multiplier; // apply fast fall multiplier
 		
 			if current_jump_force > max_fall_speed { // fall speed cap
 				current_jump_force = max_fall_speed;
@@ -120,6 +121,7 @@
 	//Ceiling Check
 	if collision_rectangle(x - 16, y - 32, x + 16, y - 34, collidable_objs, false, true) and (current_jump_force < 0) {
 		current_jump_force = 0;
+		current_dash_speed_y = 0;
 	}
 	
 	move_y = current_jump_force + current_dash_speed_y; // vertical movement calculation
@@ -128,26 +130,33 @@
 	move_and_collide(move_x, move_y, collidable_objs);
 	
 // Pickup things
+// TO-DO
+// - buffer
+// - Throw forward
+// - throw up
+// - throw down
 	if (pickup_p) and (throw_cooldown == 0) {
-		var _list = ds_list_create(); 
-		if collision_rectangle_list(x - 4, y + 12, x + 4, y + 20, obj_grabbableblock, true, true, _list, false) {
-			held_obj = _list[| 0];
-			holding_obj = true;
-			held_obj.placed = false;
-			held_obj_interp = 0.1;
-			audio_play_sound(snd_smb2_pickup, 3, false, 1, 0, 1); // sfx
-			current_jump_force -= 5;
+		var _list = ds_list_create();
+		// Pickup up
+		if (up) and collision_rectangle_list(x - 4, y - 28, x + 4, y - 48, obj_grabbableblock, true, true, _list, false) {
+			PickupObject(_list);
+		} else if (up) and collision_rectangle_list(x - 14, y - 28, x + 14, y - 48, obj_grabbableblock, true, true, _list, false) {
+			PickupObject(_list);
+		// Pickup to the side
+		} else if ((left) or (right)) and collision_rectangle_list(x + (24*dir), y - 8, x + (48*dir), y - 24, obj_grabbableblock, true, true, _list, false) {
+			PickupObject(_list);
+		// Pickup Beneath Player
+		} else if collision_rectangle_list(x - 4, y + 12, x + 4, y + 20, obj_grabbableblock, true, true, _list, false) {
+			PickupObject(_list);
 		} else if collision_rectangle_list(x - 14, y + 12, x + 14, y + 20, obj_grabbableblock, true, true, _list, false) {
-			held_obj = _list[| 0];
-			holding_obj = true;
-			held_obj.placed = false;
-			held_obj_interp = 0.1;
-			audio_play_sound(snd_smb2_pickup, 3, false, 1, 0, 1); // sfx
-			current_jump_force -= 5;
+			PickupObject(_list);
+		} else if collision_circle_list(x, y - 16, 32, obj_grabbableblock, true, true, _list, false) {
+			PickupObject(_list);
 		}
 		ds_list_destroy(_list);
 	}
-	if (holding_obj) {
+	
+	if (holding_obj) and not (throwing_obj) {
 		held_obj_x_target = x - 16; // prep objects x
 		held_obj_y_target = y - 48 - 16; // prep objects y
 		held_obj.x = lerp(held_obj.x, held_obj_x_target, held_obj_interp); // lock objects x
@@ -156,13 +165,72 @@
 		held_obj.state = 1; // set obj state to 1(held)
 		if (held_obj_interp < 1) {held_obj_interp += 0.05;}
 	}
-	if (holding_obj) and !(pickup) and (held_obj_interp == 1) {
-		audio_play_sound(snd_smb2_throw, 3, false, 1, 0, 1); // sfx
-		held_obj.state = 2; // set obj state to 2(thrown)
-		held_obj.throwspeed += abs(move_x*0.75); // conservation of momentum
-		held_obj = noone; // reset held object
-		holding_obj = false; // not holding an object anymore
-		throw_cooldown = 20;
+	
+	if (holding_obj) and !(pickup) and (held_obj_interp == 1) and (throwing_obj == false) {
+		throwing_obj = true;
+		held_obj_interp = 0.5;
+		// Deciding what way to throw it
+		if (up) {
+			if (left) or (right) {
+				thrown_obj_dir = "upforward";
+			} else {
+				thrown_obj_dir = "up";
+			}
+		} else if (left) or (right) {
+			thrown_obj_dir = "forward";
+		} else if (down) {
+			thrown_obj_dir = "down";
+		} else {
+			thrown_obj_dir = "upforward";
+		}
+	}
+	
+	if (throwing_obj) {
+		held_obj.dir = dir;
+		held_obj.state = 1;
+		// Deciding what way to throw it
+		switch thrown_obj_dir
+		{
+			case "upforward":
+				held_obj_x_target = x - 16; // prep objects x
+				held_obj_y_target = y - 48 - 16; // prep objects y
+			break;
+			case "forward":
+				held_obj_x_target = x - 16 + (32*dir); // prep objects x
+				held_obj_y_target = y - 32; // prep objects y
+			break;
+			case "up":
+				held_obj_x_target = x - 16; // prep objects x
+				held_obj_y_target = y - 48 - 16; // prep objects y
+				held_obj.airtime = 30;
+			break;
+			case "down":
+				held_obj_x_target = x - 16; // prep objects x
+				held_obj_y_target = y; // prep objects y
+				held_obj.airtime = 30;
+			break;
+		}
+		held_obj.x = lerp(held_obj.x, held_obj_x_target, held_obj_interp); // lock objects x
+		held_obj.y = lerp(held_obj.y, held_obj_y_target, held_obj_interp); // lock objects y
+		if (held_obj_interp < 1) {held_obj_interp += 0.1;}
+		if (held_obj_interp == 1) {
+			audio_play_sound(snd_smb2_throw, 3, false, 1, 0, 1); // sfx
+			held_obj.state = 2; // set obj state to 2(thrown)
+			held_obj.throwspeed += abs(move_x*0.75); // conservation of momentum
+			if thrown_obj_dir == "up" {
+				held_obj.throwspeed = 0;
+				held_obj._gravity -= 10;
+				held_obj._gravity += move_y*0.75;
+			} else if thrown_obj_dir == "down" {
+				held_obj.throwspeed = 0;
+				held_obj._gravity += 10;
+				held_obj._gravity += move_y*0.75;
+			}
+			held_obj = noone; // reset held object
+			holding_obj = false; // not holding an object anymore
+			throw_cooldown = 20;
+			throwing_obj = false;
+		}
 	}
 	
 	if (throw_cooldown > 0) {throw_cooldown -= 1;}

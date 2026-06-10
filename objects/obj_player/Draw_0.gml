@@ -19,7 +19,9 @@ draw_rectangle(x - 16, y, x + 16, y + 4, false)
 draw_rectangle(x - 16, y - 32, x + 16, y - 34, false)
 
 draw_rectangle(x - 4, y + 12, x + 4, y + 20, false)
+draw_rectangle(x + (24*dir), y - 8, x + (40*dir), y - 24, false)
 */
+
 /*
 draw_circle(x + lengthdir_x(128, point_direction(x, y-32, mouse_x, mouse_y)), y-32 + lengthdir_y(128, point_direction(x, y-32, mouse_x, mouse_y)), 64, false);
 draw_circle(x + lengthdir_x(48, point_direction(x, y-32, mouse_x, mouse_y)), y-32 + lengthdir_y(48, point_direction(x, y-32, mouse_x, mouse_y)), 32, false);

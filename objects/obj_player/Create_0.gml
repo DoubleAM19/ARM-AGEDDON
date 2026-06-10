@@ -4,19 +4,24 @@
 	move_x = 0; // horizontal momentum
 	move_y = 0; // vertical momentum
 	
+	// STATS
 	jump_power = 11; // amount added to move_y when a jump is performed
-	normal_jumppower = 11;
-	dashroll_jumppower = 7;
 	move_speed = 5; // amount added to move_x when walking
-	current_move_speed = 0; // current walking speed
-	current_jump_force = 0; // force of the current jump added to the vertical movement calculation
 	player_friction = 1; // how fast the horizontal movement fades, this is technically friction and horzontal air resistance
 	player_gravity = 1; // how much you are pulled down, its gravity bruh
+	max_fall_speed = 40; // the limit for how fast you can fall
+	fall_speed_multiplier = 1.2;
+	dash_speed = 7;
+
+	normal_jumppower = 11;
+	dashroll_jumppower = 7;
+	current_move_speed = 0; // current walking speed
+	current_jump_force = 0; // force of the current jump added to the vertical movement calculation
 	
 	coyote_time = 0; // timer for how long you can still jump for after leaving the ground (6 frames)
 	jump_input_buffer = 8; // timer for how long you can still get a jump if you pressed it before touching the floor (8 frames)
 	max_fall_speed = 40; // the limit for how fast you can fall
-	fall_speed_multiplier = 1; // this increases gravity with a multiplier
+	current_fall_speed_multiplier = 1; // this increases gravity with a multiplier
 	
 	dir = 1; // direction currently facing, -1 or 1
 	main_sprite = spr_test_idle;
@@ -33,7 +38,10 @@
 	
 	current_dash_speed_x = 0;
 	current_dash_speed_y = 0;
+	dash_ready = false;
 	dash_cooldown = 0;
+	
+	throwing_obj = false;
 	
 	dashroll_extraspeed = 5; // SCRAPPED
 	dashroll_endlag = 0;
@@ -64,7 +72,7 @@
 	//cursor_sprite = spr_crosshair;
 	
 // Halt momentum function(...what do you think it does)
-	function halt_momentum()
+	function HaltMomentum()
 	{
 		current_move_speed = 0;
 		current_jump_force = 0;
@@ -73,6 +81,17 @@
 		fall_speed_multiplier = 1;
 		move_x = 0;
 		move_y = 0;
+	}
+	
+// Pickup Object function (used a ton, just for neatness)
+	function PickupObject(_list)
+	{
+		held_obj = _list[| 0];
+		holding_obj = true;
+		held_obj.placed = false;
+		held_obj_interp = 0.1;
+		audio_play_sound(snd_smb2_pickup, 3, false, 1, 0, 1); // sfx
+		current_jump_force -= 5;
 	}
 	
 // HORIZONTAL STATES
@@ -105,20 +124,21 @@
 		if (-1 < current_move_speed and current_move_speed < 1) {current_move_speed = 0;}
 		
 		// Dashin
-		if (dash_p) and (dash_cooldown == 0) {
-			halt_momentum();
+		if (dash_p) and (dash_ready == true) and (dash_cooldown == 0) {
+			HaltMomentum();
 			audio_play_sound(snd_impulse, 9, false);
-			current_dash_speed_x = 10 * (right - left);
-			current_dash_speed_y = -10 * (up - down);
-			dash_cooldown = 60;
+			current_dash_speed_x = dash_speed * (right - left);
+			current_dash_speed_y = -dash_speed * (up - down);
+			dash_ready = false;
+			dash_cooldown = 30;
 		}
 		
-		if (current_dash_speed_x > 0) {current_dash_speed_x -= 0.5; current_jump_force = 0;} // slow down dash speed
-		if (current_dash_speed_x < 0) {current_dash_speed_x += 0.5; current_jump_force = 0;}
-		if (current_dash_speed_y > 0) {current_dash_speed_y -= 0.5; current_jump_force = 0;}
-		if (current_dash_speed_y < 0) {current_dash_speed_y += 0.5; current_jump_force = 0;}
+		if (dash_cooldown > 0) {dash_cooldown -= 1;}
 		
-		if (dash_cooldown > 0) {dash_cooldown -= 1;} // dash cooldown
+		if (current_dash_speed_x > 0) {current_dash_speed_x -= 0.5; current_jump_force = -1;} // slow down dash speed
+		if (current_dash_speed_x < 0) {current_dash_speed_x += 0.5; current_jump_force = -1;}
+		if (current_dash_speed_y > 0) {current_dash_speed_y -= 0.5; current_jump_force = -1;}
+		if (current_dash_speed_y < 0) {current_dash_speed_y += 0.5; current_jump_force = -1;}
 	}
 	
 	// DASHROLL - a state that can be entered by pressing [dashroll], harder to turn around, but a higher top speed
